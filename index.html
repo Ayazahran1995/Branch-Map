@@ -3,35 +3,65 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>بوظة — الطريق لفرعنا الجديد</title>
+<title>بوظة — الطريق للشاطئ الشمالي، مراسي</title>
+
+<!-- ============================================================
+  ANALYTICS
+  Calls a single trackEvent(name, params) function at every
+  meaningful interaction (see [ANALYTICS] tags in the JS below:
+  language switched, origin picked, each stop tapped, route
+  completed, Maps CTA clicked, skip-link clicked, replay). That
+  gives a real engagement funnel, not just a page view count —
+  e.g. "62% who started tapped through to the end" or "40%
+  skipped straight to Maps instead of playing."
+
+  Currently wired to Google Analytics 4 (Measurement ID below).
+  trackEvent() also auto-detects Plausible if you switch providers
+  later — just add a Plausible <script> tag and remove the two
+  GA tags below, no other code changes needed.
+
+  Open the browser console — every event also logs there as
+  "[Boza Analytics] event_name {...}" so you can verify it's
+  firing even before checking the GA4 dashboard.
+  ============================================================ -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-FMJTVHWFJN"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){ dataLayer.push(arguments); }
+  gtag('js', new Date());
+  gtag('config', 'G-FMJTVHWFJN');
+</script>
 
 <!-- ============================================================
   BOZA — "FOLLOW THE ROAD" NEW-BRANCH REVEAL
   A single-file, drop-in gamified hero for an Egyptian FMCG
   frozen-treats / iced-coffee brand. Egyptian-Arabic first, EN
-  toggle. Core mechanic: a winding road-trip map (Cairo → North
-  Coast) with sequential tap-to-unlock stops. The final stop
-  reveals the new branch opening with a real map link.
+  toggle, Gen-Z tone. Picks a route based on where the visitor is
+  coming from (Cairo, or another North Coast compound), then a
+  winding road-trip map with sequential tap-to-unlock stops ends
+  on the new branch at North Beach, Marassi.
 
   HOW TO CUSTOMIZE (search these tags):
     [BRAND]   — brand wordmark ("Boza" — Egyptian slang for ice cream)
     [COPY]    — headline / subhead, AR + EN
     [PALETTE] — CSS variables in :root, below
-    [ROUTE]   — node coordinates, teaser text, path shape
+    [ROUTES]  — both route configs: nodes, path shape, teaser text
     [REVEAL]  — final branch name / address / map link
   ============================================================ -->
 
 <style>
   :root{
-    --cream:     #FFF6E9;
-    --cream-2:   #FDECD2;
-    --pink:      #F76E8C;
-    --pink-deep: #E0456A;
-    --mango:     #F6A63A;
-    --pistachio: #6FA98A;
-    --cocoa:     #3B2419;
-    --sea:       #1E8C8C;
-    --route-idle:#E7D6BC;
+    /* North Coast summer palette — saturated, not pastel */
+    --cream:     #FCE8B8;
+    --cream-2:   #F8D48C;
+    --pink:      #2FBFB5;   /* sea turquoise */
+    --pink-deep: #0B655F;   /* deep sea teal */
+    --mango:     #F5960F;
+    --pistachio: #4F9873;
+    --cocoa:     #241708;
+    --sea:       #0B655F;
+    --coral:     #F2603D;
+    --route-idle:#E3C58C;
 
     --font-display: 'Baloo 2', 'Baloo Bhaijaan 2', sans-serif;
     --font-ar: 'Baloo Bhaijaan 2', 'Baloo 2', sans-serif;
@@ -58,6 +88,8 @@
   html[dir="rtl"] .replay-btn,
   html[dir="rtl"] .end-title,
   html[dir="rtl"] .node-label,
+  html[dir="rtl"] .origin-btn,
+  html[dir="rtl"] .chip,
   html[dir="rtl"] .lang-toggle{
     font-family: var(--font-ar);
   }
@@ -70,8 +102,8 @@
     position:relative;
     min-height:100vh;
     background:
-      radial-gradient(ellipse 60% 45% at 15% 0%, rgba(247,110,140,0.18) 0%, rgba(247,110,140,0) 60%),
-      radial-gradient(ellipse 55% 40% at 90% 10%, rgba(246,166,58,0.22) 0%, rgba(246,166,58,0) 60%),
+      radial-gradient(ellipse 65% 50% at 12% 0%, rgba(11,101,95,0.32) 0%, rgba(11,101,95,0) 62%),
+      radial-gradient(ellipse 60% 45% at 92% 8%, rgba(245,150,15,0.38) 0%, rgba(245,150,15,0) 62%),
       var(--cream);
   }
 
@@ -175,7 +207,29 @@
     padding: 16px 20px;
     background: var(--cream-2);
     border-bottom: 3px solid var(--cocoa);
+    gap: 10px;
+    flex-wrap: wrap;
   }
+
+  .game-head-right{
+    display:flex; align-items:center; gap:10px;
+  }
+
+  .change-origin-btn{
+    font-family: var(--font-body);
+    font-size: 0.7rem;
+    font-weight: 700;
+    background: #fff;
+    border: 2px solid var(--cocoa);
+    color: var(--cocoa);
+    border-radius: 999px;
+    padding: 6px 10px;
+    cursor:pointer;
+    white-space: nowrap;
+    transition: background 0.2s ease;
+  }
+  .change-origin-btn:hover{ background: var(--mango); }
+  .change-origin-btn:focus-visible{ outline:2px solid var(--pink-deep); outline-offset:2px; }
 
   .game-title{
     font-family: var(--font-display);
@@ -196,7 +250,7 @@
     width:100%;
     background:
       repeating-linear-gradient(45deg, rgba(30,140,140,0.05) 0 2px, transparent 2px 22px),
-      linear-gradient(180deg, #FFFDF8 0%, var(--cream-2) 100%);
+      linear-gradient(180deg, #FDF3D9 0%, var(--cream-2) 100%);
   }
 
   .route-svg{ position:absolute; inset:0; width:100%; height:100%; }
@@ -213,6 +267,7 @@
     opacity:0.55;
     transition: opacity 0.3s ease, background 0.3s ease, transform 0.2s ease;
     cursor: default;
+    padding:0;
   }
   .node.start{
     background: var(--cream);
@@ -304,6 +359,56 @@
   }
   .overlay.hidden{ display:none; }
 
+  /* origin picker */
+  .origin-title{
+    font-family: var(--font-display);
+    font-weight:800;
+    font-size:1.25rem;
+    color: var(--cocoa);
+  }
+  .origin-sub{
+    font-size:0.85rem;
+    opacity:0.75;
+    max-width:30ch;
+  }
+  .origin-options{
+    display:flex; flex-direction:column; gap:12px;
+    width:100%;
+    max-width: 280px;
+    margin-top:6px;
+  }
+  .origin-btn{
+    display:flex; align-items:center; gap:12px;
+    font-family: var(--font-body);
+    font-weight:700; font-size:0.92rem;
+    background:#fff;
+    border: 3px solid var(--cocoa);
+    border-radius: 16px;
+    padding: 14px 16px;
+    cursor:pointer;
+    text-align: start;
+    transition: background 0.2s ease, transform 0.12s ease;
+  }
+  .origin-btn .emoji{ font-size:1.5rem; }
+  .origin-btn:hover{ background: var(--cream-2); transform: translateY(-2px); }
+  .origin-btn:active{ transform: translateY(1px); }
+  .origin-btn:focus-visible{ outline:2px solid var(--pink-deep); outline-offset:2px; }
+
+  .back-link{
+    margin-top: 4px;
+    background: none;
+    border: none;
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    font-weight:700;
+    color: var(--cocoa);
+    opacity: 0.7;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+  .back-link:hover{ opacity:1; }
+  .back-link:focus-visible{ outline:2px solid var(--pink-deep); outline-offset:2px; }
+
   .end-title{
     font-family: var(--font-display);
     font-weight:800;
@@ -338,6 +443,12 @@
     border: 2px dashed var(--cocoa);
     border-radius: 14px;
     padding: 8px 16px;
+  }
+  .end-tip{
+    font-size: 0.76rem;
+    opacity: 0.75;
+    max-width: 30ch;
+    margin: 2px 0 0;
   }
 
   .end-actions{
@@ -412,6 +523,40 @@
     .node.active{ animation:none; }
     .traveler{ transition:none; }
   }
+
+  /* ---------- responsive: small phones ---------- */
+  @media (max-width: 380px){
+    .game-wrap{ padding: 0 8px; }
+    .node{ width:44px; height:44px; font-size:1.2rem; }
+    .node.final{ width:54px; height:54px; font-size:1.5rem; }
+    .node-label{ font-size:0.52rem; padding:1px 4px; }
+    .traveler{ width:24px; height:24px; font-size:1.1rem; }
+    .headline{ font-size: clamp(1.6rem, 7vw, 2.2rem); }
+    .origin-title{ font-size:1.05rem; }
+    .game-title{ font-size:0.85rem; }
+    .end-title{ font-size:1.25rem; }
+  }
+
+  /* ---------- responsive: tablets & up ---------- */
+  @media (min-width: 700px){
+    .game-wrap{ max-width: 520px; }
+    .hero{ max-width: 780px; }
+  }
+
+  /* ---------- responsive: large desktop ---------- */
+  @media (min-width: 1100px){
+    .page{ padding-bottom: 20px; }
+    .game-wrap{ max-width: 560px; }
+    .node{ width:56px; height:56px; }
+    .node.final{ width:70px; height:70px; }
+  }
+
+  /* ---------- responsive: short viewports (landscape phones) ---------- */
+  @media (max-height: 560px) and (orientation: landscape){
+    .hero{ padding-top: 16px; padding-bottom: 0; }
+    .fact-chips{ margin-top: 10px; }
+    .game-wrap{ margin-top: 14px; }
+  }
 </style>
 </head>
 <body>
@@ -428,122 +573,175 @@
 
   <div class="hero">
     <div class="eyebrow">
-      <span data-i18n="ar">🎉 فرع جديد قرايب أوي</span>
-      <span data-i18n="en">🎉 New branch, almost here</span>
+      <span data-i18n="ar">😎 خبر جامد</span>
+      <span data-i18n="en">😎 Big news</span>
     </div>
 
     <h1 class="headline">
-      <span data-i18n="ar">تعالوا معانا... لحد <em>فرعنا الجديد</em> في الساحل</span>
-      <span data-i18n="en">Follow us... all the way to our <em>new branch</em> on the Coast</span>
+      <span data-i18n="ar">فرعنا الجديد نازل في <em>مراسي، نورث باي</em> 🍦📍</span>
+      <span data-i18n="en">Our new spot just dropped at <em>Marassi, North Bay</em> 🍦📍</span>
     </h1>
 
     <p class="subhead">
-      <span data-i18n="ar">دوس على كل محطة حقيقية في الطريق، اكسب تلميح، ولحد ما توصل بالظبط لمكان الفرع الجديد.</span>
-      <span data-i18n="en">Tap each real stop along the road, unlock a clue, and land exactly where the new branch is.</span>
+      <span data-i18n="ar">مش هنقولك مكاننا وخلاص. تعالى اوصله بنفسك، محطة محطة، وشوف الطريق يودّيك فين.</span>
+      <span data-i18n="en">We're not just gonna tell you where we are. Get yourself there, stop by stop, and see where the road takes you.</span>
     </p>
     <div class="fact-chips">
-      <span class="chip">🚗 <span data-i18n="ar">من القاهرة حوالي ٣ ساعات</span><span data-i18n="en">~3 hrs from Cairo</span></span>
-      <span class="chip">📏 <span data-i18n="ar">حوالي ٢٠٠ كم</span><span data-i18n="en">~200 km</span></span>
+      <span class="chip">🎮 <span data-i18n="ar">مود لعب</span><span data-i18n="en">Game mode</span></span>
+      <span class="chip">🗺️ <span data-i18n="ar">طريق حقيقي</span><span data-i18n="en">Real route</span></span>
     </div>
   </div>
 
   <div class="game-wrap">
     <div class="game-card">
       <div class="game-head">
-        <div class="game-title">
-          <span data-i18n="ar">🗺️ من القاهرة للساحل</span>
-          <span data-i18n="en">🗺️ Cairo to the Coast</span>
+        <div class="game-title" id="gameTitle">
+          <span data-i18n="ar">🗺️ لحد نورث باي</span>
+          <span data-i18n="en">🗺️ To North Bay</span>
         </div>
-        <div class="progress-label" id="progressLabel"></div>
+        <div class="game-head-right">
+          <div class="progress-label" id="progressLabel"></div>
+          <button class="change-origin-btn" id="changeOriginBtn" title="Change starting point">
+            <span data-i18n="ar">🔁 غيّر البداية</span>
+            <span data-i18n="en">🔁 Change start</span>
+          </button>
+        </div>
       </div>
 
       <div class="map-stage" id="mapStage">
         <svg class="route-svg" viewBox="0 0 400 620" preserveAspectRatio="xMidYMid meet">
-          <path id="routeBase" fill="none" stroke="#E7D6BC" stroke-width="6" stroke-linecap="round"
-            stroke-dasharray="2 16"
-            d="M200,40 C140,90 90,110 110,140 S 260,190 290,230 S 130,300 100,340 S 250,400 280,440 S 170,520 200,560" />
-          <path id="routeProgress" fill="none" stroke="#F76E8C" stroke-width="6" stroke-linecap="round"
-            d="M200,40 C140,90 90,110 110,140 S 260,190 290,230 S 130,300 100,340 S 250,400 280,440 S 170,520 200,560" />
+          <path id="routeBase" fill="none" stroke="#E7D6BC" stroke-width="6" stroke-linecap="round" stroke-dasharray="2 16" d="" />
+          <path id="routeProgress" fill="none" stroke="#0E7C74" stroke-width="6" stroke-linecap="round" d="" />
         </svg>
 
-        <!-- [ROUTE] node coordinates as % of the 400x620 viewBox -->
-        <div class="node start" style="left:50%; top:6.5%;">🏙️
-          <span class="node-label" data-i18n="ar">القاهرة</span>
-          <span class="node-label" data-i18n="en">Cairo</span>
+        <div id="nodeLayer"><!-- [ROUTES] nodes injected by JS based on chosen origin --></div>
+
+        <div class="traveler hidden" id="traveler">🛵</div>
+        <div class="teaser" id="teaser"></div>
+
+        <!-- origin picker: shown first, decides which route renders -->
+        <div class="overlay" id="originOverlay">
+          <div class="origin-title">
+            <span data-i18n="ar">جاي منين النهاردة؟ 👀</span>
+            <span data-i18n="en">Where are you coming from today? 👀</span>
+          </div>
+          <p class="origin-sub">
+            <span data-i18n="ar">اختار نقطة البداية وهنوريك أقرب طريق لشاطئ نورث باي.</span>
+            <span data-i18n="en">Pick your starting point and we'll show you the fastest way to North Bay Beach.</span>
+          </p>
+          <div class="origin-options">
+            <button class="origin-btn" data-origin="cairo">
+              <span class="emoji">🚗</span>
+              <span>
+                <span data-i18n="ar">جاي من القاهرة</span>
+                <span data-i18n="en">Coming from Cairo</span>
+              </span>
+            </button>
+            <button class="origin-btn" data-origin="nearby">
+              <span class="emoji">🏘️</span>
+              <span>
+                <span data-i18n="ar">أنا أصلاً على الساحل، كمبوند تاني</span>
+                <span data-i18n="en">Already on the Coast, different compound</span>
+              </span>
+            </button>
+          </div>
         </div>
 
-        <button class="node" data-index="1" style="left:27.5%; top:22.5%;" aria-label="stop 1">🛣️
-          <span class="node-label" data-i18n="ar">الطريق الصحراوي</span>
-          <span class="node-label" data-i18n="en">Desert Road</span>
-        </button>
-        <button class="node" data-index="2" style="left:72.5%; top:37%;" aria-label="stop 2">🌆
-          <span class="node-label" data-i18n="ar">الإسكندرية</span>
-          <span class="node-label" data-i18n="en">Alexandria</span>
-        </button>
-        <button class="node" data-index="3" style="left:25%; top:55%;" aria-label="stop 3">🌊
-          <span class="node-label" data-i18n="ar">مارينا · ك٩٠</span>
-          <span class="node-label" data-i18n="en">Marina · Km90</span>
-        </button>
-        <button class="node" data-index="4" style="left:70%; top:71%;" aria-label="stop 4">🏖️
-          <span class="node-label" data-i18n="ar">الساحل · ك١٢٤</span>
-          <span class="node-label" data-i18n="en">Sahel · Km124</span>
-        </button>
-        <button class="node final" data-index="5" style="left:50%; top:90%;" aria-label="final stop">📍
-          <span class="node-label" data-i18n="ar">مراسي · شاطئ ٦</span>
-          <span class="node-label" data-i18n="en">Marassi · Beach 6</span>
-        </button>
-
-        <div class="traveler" id="traveler" style="left:50%; top:6.5%;">🛵</div>
-        <div class="teaser" id="teaser"></div>
+        <!-- second step: only for "already on the Coast" — which side of Marassi are they on -->
+        <div class="overlay hidden" id="sideOverlay">
+          <div class="origin-title">
+            <span data-i18n="ar">كمبوندك فين بالظبط؟ 🧭</span>
+            <span data-i18n="en">Where exactly is your compound? 🧭</span>
+          </div>
+          <p class="origin-sub">
+            <span data-i18n="ar">مراسي كبيرة وليها أكتر من جيران — كمبوندك قبلها ولا بعدها؟</span>
+            <span data-i18n="en">Marassi has neighbors on both sides — is your compound before it or after it?</span>
+          </p>
+          <div class="origin-options">
+            <button class="origin-btn" data-origin="nearbyBefore">
+              <span class="emoji">⬅️</span>
+              <span>
+                <span data-i18n="ar">قبل مراسي (جهة مارينا)</span>
+                <span data-i18n="en">Before Marassi (Marina side)</span>
+              </span>
+            </button>
+            <button class="origin-btn" data-origin="nearbyAfter">
+              <span class="emoji">➡️</span>
+              <span>
+                <span data-i18n="ar">بعد مراسي (جهة سيدي عبدالرحمن)</span>
+                <span data-i18n="en">After Marassi (Sidi Abdel Rahman side)</span>
+              </span>
+            </button>
+          </div>
+          <button class="back-link" id="backToStep1">
+            <span data-i18n="ar">⬅ رجوع</span>
+            <span data-i18n="en">⬅ Back</span>
+          </button>
+        </div>
 
         <div class="overlay hidden" id="revealOverlay">
           <div class="end-title">
-            <span data-i18n="ar">وصلنا! 🎉</span>
-            <span data-i18n="en">We made it! 🎉</span>
+            <span data-i18n="ar">وصلت! 🎉</span>
+            <span data-i18n="en">You made it! 🎉</span>
           </div>
           <p class="end-sub">
-            <span data-i18n="ar">فرع بوظة الجديد افتتح رسمياً في الساحل الشمالي — تعالوا جربوه بنفسكم.</span>
-            <span data-i18n="en">The new Boza branch is officially open on the North Coast — come try it yourself.</span>
+            <span data-i18n="ar">فرع بوظة الجديد فاتح رسمي — يلا بينا نشوفه.</span>
+            <span data-i18n="en">The new Boza branch is officially open — come see it for real.</span>
           </p>
           <div class="end-details"> <!-- [REVEAL] -->
             <div class="end-compound">
-              <span data-i18n="ar">🏖️ كمبوند مراسي — شاطئ ٦</span>
-              <span data-i18n="en">🏖️ Marassi Compound — Beach 6</span>
+              <span data-i18n="ar">🏖️ مراسي — شاطئ نورث باي</span>
+              <span data-i18n="en">🏖️ Marassi — North Bay Beach</span>
             </div>
             <div class="end-address">
-              <span data-i18n="ar">📍 كيلو ١٢٤، الساحل الشمالي</span>
-              <span data-i18n="en">📍 Kilo 124, North Coast</span>
+              <span data-i18n="ar">📍 جنب الشمسية الصفرا، كيلو ١٢٤</span>
+              <span data-i18n="en">📍 By the yellow umbrella, Kilo 124</span>
             </div>
           </div>
+          <p class="end-tip">
+            <span data-i18n="ar">🧭 الـ GPS جوه الكمبوند مش دايمًا مضبوط — دور على الشمسية الصفرا وإحنا هناك!</span>
+            <span data-i18n="en">🧭 GPS isn't always reliable inside the compound — look for the yellow umbrella, we're right there!</span>
+          </p>
           <div class="end-actions">
-            <a class="cta maps-cta" href="https://www.google.com/maps/search/?api=1&query=Marassi+Sidi+Abdel+Rahman+North+Coast+Egypt" target="_blank" rel="noopener">
+            <a class="cta maps-cta" href="https://www.google.com/maps/search/?api=1&query=Marassi+North+Bay+Sidi+Abdel+Rahman+North+Coast+Egypt" target="_blank" rel="noopener">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z"/><circle cx="12" cy="10" r="3"/></svg>
               <span data-i18n="ar">افتح على Google Maps</span>
               <span data-i18n="en">Open in Google Maps</span>
             </a>
             <button class="replay-btn" id="replayBtn">
-              <span data-i18n="ar">ابدأ الرحلة تاني</span>
-              <span data-i18n="en">Retrace the Route</span>
+              <span data-i18n="ar">جرب من مكان تاني</span>
+              <span data-i18n="en">Try from another start</span>
             </button>
           </div>
         </div>
       </div>
 
-      <a class="skip-link" href="https://www.google.com/maps/search/?api=1&query=Marassi+Sidi+Abdel+Rahman+North+Coast+Egypt" target="_blank" rel="noopener">
-        <span data-i18n="ar">🧭 مش عايز تلعب؟ افتح موقعنا على Google Maps</span>
-        <span data-i18n="en">🧭 Don't want to play? Open our location on Google Maps</span>
+      <a class="skip-link" href="https://www.google.com/maps/search/?api=1&query=Marassi+North+Bay+Sidi+Abdel+Rahman+North+Coast+Egypt" target="_blank" rel="noopener">
+        <span data-i18n="ar">🧭 مش عايز تلعب؟ افتح موقعنا على Google Maps على طول</span>
+        <span data-i18n="en">🧭 Don't want to play? Jump straight to Google Maps</span>
       </a>
     </div>
   </div>
 
   <div class="footer-strip">
-    <span data-i18n="ar">بوظة · مراسي، الساحل الشمالي · كيلو ١٢٤ · شاطئ ٦</span>
-    <span data-i18n="en">Boza · Marassi, North Coast · Kilo 124 · Beach 6</span>
+    <span data-i18n="ar">بوظة · مراسي، شاطئ نورث باي · جنب الشمسية الصفرا</span>
+    <span data-i18n="en">Boza · Marassi, North Bay Beach · By the yellow umbrella</span>
   </div>
 
 </div>
 
 <script>
+  // ---------- [ANALYTICS] provider-agnostic event tracker ----------
+  // Works with GA4 (gtag) or Plausible if either is loaded above; otherwise
+  // just logs to console so you can confirm events fire before wiring a provider.
+  function trackEvent(name, params = {}){
+    try{
+      if(typeof gtag === 'function'){ gtag('event', name, params); }
+      if(typeof plausible === 'function'){ plausible(name, { props: params }); }
+      console.log('[Boza Analytics]', name, params);
+    }catch(e){ /* never let analytics break the experience */ }
+  }
+
   // ---------- language toggle ----------
   let currentLang = 'ar';
   const langToggle = document.getElementById('langToggle');
@@ -553,35 +751,95 @@
     document.documentElement.lang = currentLang;
     langToggle.textContent = currentLang === 'ar' ? 'EN' : 'AR';
     updateProgressLabel();
+    trackEvent('language_switched', { language: currentLang });
   });
 
-  // ---------- [ROUTE] the road-trip map game ----------
-  const TOTAL_STEPS = 5;
-  const TEASERS = {
-    1: { ar: 'طريق مصر–إسكندرية الصحراوي… يلا بينا! 🛣️', en: 'Cairo–Alex desert road… let’s go! 🛣️' },
-    2: { ar: 'وصلنا الإسكندرية، وأول الطريق الساحلي 🌆', en: 'We hit Alexandria — the coastal road starts here 🌆' },
-    3: { ar: 'كيلو ٩٠ تقريبًا… أهلاً مارينا! 🌊', en: 'Around Kilo 90… hello Marina! 🌊' },
-    4: { ar: 'كيلو ١٢٤… وصلنا الساحل (سيدي عبدالرحمن) 🏖️', en: 'Kilo 124… we’re in Sahel (Sidi Abdel Rahman) 🏖️' },
-    5: { ar: 'مراسي، شاطئ ٦… فرعنا الجديد! 📍🎉', en: 'Marassi, Beach 6… our new branch! 📍🎉' }
+  // ---------- [ROUTES] origin-aware road-trip configs using real North Coast landmarks ----------
+  // Marina is inside Sahel (not a separate leg) — the Marina stop marks entering Sahel, not leaving it.
+  // Marassi has several beaches, so the destination is named specifically: North Bay.
+  // "Already on the Coast" splits into before/after Marassi, since neighboring compounds sit on both sides.
+  const ROUTES = {
+    cairo: {
+      pathD: "M200,31 C150,70 100,80 100,105 S 300,140 300,174 S 100,210 100,242 S 300,280 300,310 S 100,345 100,378 S 300,415 300,446 S 150,500 200,558",
+      start: { x:50, y:5, icon:'🏙️', ar:'القاهرة', en:'Cairo' },
+      title: { ar:'🗺️ من القاهرة لنورث باي', en:'🗺️ Cairo to North Bay' },
+      nodes: [
+        { x:25, y:17, icon:'🛣️', ar:'الصحراوي', en:'Desert Rd',
+          teaserAr:'طريق القاهرة–الإسكندرية الصحراوي… يلا بينا! 🛣️', teaserEn:'Cairo–Alexandria Desert Road… let’s go! 🛣️' },
+        { x:75, y:28, icon:'🏭', ar:'سيدي كرير', en:'Sidi Krir',
+          teaserAr:'عدينا سيدي كرير… قربنا نوصل الإسكندرية 🏭', teaserEn:'Passed Sidi Krir… almost at Alexandria 🏭' },
+        { x:25, y:39, icon:'🏛️', ar:'العلمين الجديدة', en:'New Alamein',
+          teaserAr:'العلمين الجديدة! نص الطريق تقريبًا 🏛️', teaserEn:'New Alamein! About halfway there 🏛️' },
+        { x:75, y:50, icon:'🌊', ar:'مارينا', en:'Marina',
+          teaserAr:'دخلنا الساحل من مارينا! 🌊', teaserEn:'Entered Sahel through Marina! 🌊' },
+        { x:25, y:61, icon:'🏨', ar:'هاسيندا باي', en:'Hacienda Bay',
+          teaserAr:'عدينا هاسيندا باي… مراسي قربت 🏨', teaserEn:'Passed Hacienda Bay… Marassi is close 🏨' },
+        { x:75, y:72, icon:'🚪', ar:'بوابة مراسي', en:'Marassi Gate',
+          teaserAr:'بوابة مراسي! دخلنا 🚪', teaserEn:'Marassi gate! We’re in 🚪' },
+        { x:50, y:90, icon:'⛱️', ar:'نورث باي', en:'North Bay', final:true,
+          teaserAr:'شاطئ نورث باي… جنب الشمسية الصفرا! 🏖️🍦', teaserEn:'North Bay Beach… by the yellow umbrella! 🏖️🍦' }
+      ]
+    },
+    nearbyBefore: {
+      pathD: "M200,50 C150,100 100,140 112,174 S 320,240 288,298 S 90,360 112,422 S 260,480 200,558",
+      start: { x:50, y:8, icon:'🏘️', ar:'كمبوندك', en:'Your compound' },
+      title: { ar:'🗺️ من كمبوندك (قبل مراسي) لنورث باي', en:'🗺️ Your compound (before Marassi) to North Bay' },
+      nodes: [
+        { x:28, y:28, icon:'🚙', ar:'بوابة الكمبوند', en:'Compound gate',
+          teaserAr:'طلعنا من البوابة… يلا نلف على الساحلي 🚙', teaserEn:'Out the gate… onto the coastal road 🚙' },
+        { x:72, y:48, icon:'🏨', ar:'هاسيندا باي', en:'Hacienda Bay',
+          teaserAr:'عدينا هاسيندا باي… مراسي قربت خالص 🏨', teaserEn:'Passed Hacienda Bay… Marassi is right there 🏨' },
+        { x:28, y:68, icon:'🚪', ar:'بوابة مراسي', en:'Marassi Gate',
+          teaserAr:'بوابة مراسي! دخلنا 🚪', teaserEn:'Marassi gate! We’re in 🚪' },
+        { x:50, y:90, icon:'⛱️', ar:'نورث باي', en:'North Bay', final:true,
+          teaserAr:'شاطئ نورث باي… جنب الشمسية الصفرا! 🏖️🍦', teaserEn:'North Bay Beach… by the yellow umbrella! 🏖️🍦' }
+      ]
+    },
+    nearbyAfter: {
+      pathD: "M200,50 C150,100 100,140 112,174 S 320,240 288,298 S 90,360 112,422 S 260,480 200,558",
+      start: { x:50, y:8, icon:'🏘️', ar:'كمبوندك', en:'Your compound' },
+      title: { ar:'🗺️ من كمبوندك (بعد مراسي) لنورث باي', en:'🗺️ Your compound (after Marassi) to North Bay' },
+      nodes: [
+        { x:28, y:28, icon:'🚙', ar:'بوابة الكمبوند', en:'Compound gate',
+          teaserAr:'طلعنا من البوابة… راجعين تجاه مراسي 🚙', teaserEn:'Out the gate… heading back toward Marassi 🚙' },
+        { x:72, y:48, icon:'🏖️', ar:'سيدي عبد الرحمن', en:'Sidi Abdel Rahman',
+          teaserAr:'عدينا سيدي عبد الرحمن… مراسي قربت خالص 🏖️', teaserEn:'Passed Sidi Abdel Rahman… Marassi is right there 🏖️' },
+        { x:28, y:68, icon:'🚪', ar:'بوابة مراسي', en:'Marassi Gate',
+          teaserAr:'بوابة مراسي! دخلنا 🚪', teaserEn:'Marassi gate! We’re in 🚪' },
+        { x:50, y:90, icon:'⛱️', ar:'نورث باي', en:'North Bay', final:true,
+          teaserAr:'شاطئ نورث باي… جنب الشمسية الصفرا! 🏖️🍦', teaserEn:'North Bay Beach… by the yellow umbrella! 🏖️🍦' }
+      ]
+    }
   };
 
   const stage = document.getElementById('mapStage');
   const traveler = document.getElementById('traveler');
   const teaser = document.getElementById('teaser');
   const progressLabel = document.getElementById('progressLabel');
+  const routeBase = document.getElementById('routeBase');
   const routeProgress = document.getElementById('routeProgress');
+  const nodeLayer = document.getElementById('nodeLayer');
+  const originOverlay = document.getElementById('originOverlay');
+  const sideOverlay = document.getElementById('sideOverlay');
   const revealOverlay = document.getElementById('revealOverlay');
   const replayBtn = document.getElementById('replayBtn');
-  const nodes = Array.from(document.querySelectorAll('.node[data-index]'));
+  const gameTitle = document.getElementById('gameTitle');
+  const changeOriginBtn = document.getElementById('changeOriginBtn');
+  const backToStep1 = document.getElementById('backToStep1');
 
+  let currentRoute = null;
+  let currentRouteKey = null;
+  let nodes = [];
   let progress = 0;
+  let totalSteps = 0;
   let routeLength = 0;
   let teaserTimer = null;
 
   function updateProgressLabel(){
+    if(!totalSteps) { progressLabel.textContent = ''; return; }
     const text = currentLang === 'ar'
-      ? `${arabicDigits(progress)} من ${arabicDigits(TOTAL_STEPS)}`
-      : `${progress} of ${TOTAL_STEPS}`;
+      ? `${arabicDigits(progress)} من ${arabicDigits(totalSteps)}`
+      : `${progress} of ${totalSteps}`;
     progressLabel.textContent = text;
   }
 
@@ -590,12 +848,52 @@
     return String(n).split('').map(d => map[+d] ?? d).join('');
   }
 
-  function initRoute(){
-    routeLength = routeProgress.getTotalLength();
-    routeProgress.style.strokeDasharray = routeLength;
-    routeProgress.style.strokeDashoffset = routeLength;
-    setActive(1);
-    updateProgressLabel();
+  function buildRoute(key){
+    currentRoute = ROUTES[key];
+    currentRouteKey = key;
+    totalSteps = currentRoute.nodes.length;
+    progress = 0;
+
+    gameTitle.innerHTML = `<span data-i18n="ar">${currentRoute.title.ar}</span><span data-i18n="en">${currentRoute.title.en}</span>`;
+
+    routeBase.setAttribute('d', currentRoute.pathD);
+    routeProgress.setAttribute('d', currentRoute.pathD);
+
+    nodeLayer.innerHTML = '';
+    const s = currentRoute.start;
+    const startEl = document.createElement('div');
+    startEl.className = 'node start';
+    startEl.style.left = s.x + '%';
+    startEl.style.top = s.y + '%';
+    startEl.innerHTML = `${s.icon}<span class="node-label" data-i18n="ar">${s.ar}</span><span class="node-label" data-i18n="en">${s.en}</span>`;
+    nodeLayer.appendChild(startEl);
+
+    nodes = currentRoute.nodes.map((n, i) => {
+      const idx = i + 1;
+      const btn = document.createElement('button');
+      btn.className = 'node' + (n.final ? ' final' : '');
+      btn.dataset.index = idx;
+      btn.style.left = n.x + '%';
+      btn.style.top = n.y + '%';
+      btn.setAttribute('aria-label', `stop ${idx}`);
+      btn.innerHTML = `${n.icon}<span class="node-label" data-i18n="ar">${n.ar}</span><span class="node-label" data-i18n="en">${n.en}</span>`;
+      btn.addEventListener('click', () => handleNodeClick(btn, n, idx));
+      nodeLayer.appendChild(btn);
+      return btn;
+    });
+
+    traveler.style.left = s.x + '%';
+    traveler.style.top = s.y + '%';
+    traveler.classList.remove('hidden');
+
+    requestAnimationFrame(() => {
+      routeLength = routeProgress.getTotalLength();
+      routeProgress.style.transition = 'none';
+      routeProgress.style.strokeDasharray = routeLength;
+      routeProgress.style.strokeDashoffset = routeLength;
+      setActive(1);
+      updateProgressLabel();
+    });
   }
 
   function setActive(index){
@@ -606,10 +904,9 @@
     });
   }
 
-  function showTeaser(index){
+  function showTeaser(n){
     clearTimeout(teaserTimer);
-    const t = TEASERS[index];
-    teaser.textContent = currentLang === 'ar' ? t.ar : t.en;
+    teaser.textContent = currentLang === 'ar' ? n.teaserAr : n.teaserEn;
     teaser.classList.add('show');
     teaserTimer = setTimeout(() => teaser.classList.remove('show'), 2200);
   }
@@ -620,7 +917,7 @@
   }
 
   function spawnConfetti(){
-    const colors = ['#F76E8C', '#F6A63A', '#6FA98A', '#E0456A'];
+    const colors = ['#0E7C74', '#F6A63A', '#6FA98A', '#4FC7C0', '#F4795B'];
     for(let i = 0; i < 34; i++){
       const p = document.createElement('div');
       p.className = 'confetti';
@@ -636,50 +933,89 @@
     }
   }
 
-  function handleNodeClick(node){
-    const index = +node.dataset.index;
-    if(index !== progress + 1) return;
+  function handleNodeClick(btn, n, idx){
+    if(idx !== progress + 1) return;
 
-    node.classList.remove('active');
-    node.classList.add('done');
-    moveTraveler(node);
-    showTeaser(index);
+    btn.classList.remove('active');
+    btn.classList.add('done');
+    moveTraveler(btn);
+    showTeaser(n);
 
-    progress = index;
+    progress = idx;
     updateProgressLabel();
 
-    const offset = routeLength * (1 - progress / TOTAL_STEPS);
+    trackEvent('stop_reached', {
+      route: currentRouteKey,
+      stop_index: idx,
+      stop_total: totalSteps,
+      stop_label_en: n.en
+    });
+
+    const offset = routeLength * (1 - progress / totalSteps);
     routeProgress.style.transition = 'stroke-dashoffset 0.6s ease';
     routeProgress.style.strokeDashoffset = offset;
 
-    if(progress < TOTAL_STEPS){
+    if(progress < totalSteps){
       setActive(progress + 1);
     } else {
       setTimeout(() => {
         spawnConfetti();
         revealOverlay.classList.remove('hidden');
+        trackEvent('route_completed', { route: currentRouteKey, stop_total: totalSteps });
       }, 700);
     }
   }
 
-  nodes.forEach(n => n.addEventListener('click', () => handleNodeClick(n)));
+  document.querySelectorAll('.origin-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.origin;
+      if(key === 'nearby'){
+        originOverlay.classList.add('hidden');
+        sideOverlay.classList.remove('hidden');
+        trackEvent('origin_selected', { origin: 'nearby_pending_side' });
+        return;
+      }
+      originOverlay.classList.add('hidden');
+      sideOverlay.classList.add('hidden');
+      trackEvent('origin_selected', { origin: key });
+      buildRoute(key);
+    });
+  });
 
-  function resetRoute(){
-    progress = 0;
-    nodes.forEach(n => n.classList.remove('done', 'active'));
-    const startNode = document.querySelector('.node.start');
-    moveTraveler(startNode);
-    routeProgress.style.transition = 'none';
-    routeProgress.style.strokeDashoffset = routeLength;
+  backToStep1.addEventListener('click', () => {
+    sideOverlay.classList.add('hidden');
+    originOverlay.classList.remove('hidden');
+    trackEvent('origin_back_clicked', {});
+  });
+
+  function resetToOriginPicker(){
     revealOverlay.classList.add('hidden');
+    sideOverlay.classList.add('hidden');
     teaser.classList.remove('show');
-    requestAnimationFrame(() => setActive(1));
+    traveler.classList.add('hidden');
+    nodeLayer.innerHTML = '';
+    routeProgress.setAttribute('d', '');
+    routeBase.setAttribute('d', '');
+    progress = 0; totalSteps = 0;
     updateProgressLabel();
+    originOverlay.classList.remove('hidden');
   }
 
-  replayBtn.addEventListener('click', resetRoute);
+  replayBtn.addEventListener('click', () => {
+    trackEvent('replay_clicked', { from_route: currentRouteKey });
+    resetToOriginPicker();
+  });
+  changeOriginBtn.addEventListener('click', () => {
+    trackEvent('change_origin_clicked', { from_route: currentRouteKey });
+    resetToOriginPicker();
+  });
 
-  window.addEventListener('load', initRoute);
+  document.querySelector('.maps-cta').addEventListener('click', () => {
+    trackEvent('maps_cta_clicked', { route: currentRouteKey, source: 'reveal_card' });
+  });
+  document.querySelector('.skip-link').addEventListener('click', () => {
+    trackEvent('maps_cta_clicked', { route: currentRouteKey, source: 'skip_link' });
+  });
 </script>
 
 </body>
